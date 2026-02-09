@@ -188,9 +188,13 @@ app.MapHub<LoadViewHub>("/hubs/loadview");
 // Map gRPC services
 app.MapGrpcServices();
 
-RecurringJob.AddOrUpdate<IChatRoomScanner>(
-    "chat-room-scan",
-    s => s.ScanAsync(),
-    Cron.Minutely);
+// Initialize recurring jobs after app starts
+app.Lifetime.ApplicationStarted.Register(() =>
+{
+    RecurringJob.AddOrUpdate<IChatRoomScanner>(
+        "chat-room-scan",
+        s => s.ScanAsync(),
+        Cron.Minutely);
+});
 
 app.Run();
