@@ -37,6 +37,23 @@ if (builder.Environment.IsDevelopment())
     // Clear the URLs from launchSettings to use only Kestrel config
     builder.WebHost.UseUrls();
 }
+else
+{
+    // Production: Configure Kestrel to support both REST (HTTP/1.1) and gRPC (HTTP/2)
+    builder.WebHost.ConfigureKestrel((context, options) =>
+    {
+        // Port 80: REST API with HTTP/1.1 and HTTP/2 (for browsers and REST clients)
+        options.ListenAnyIP(80, listenOptions =>
+        {
+            listenOptions.Protocols = HttpProtocols.Http1AndHttp2;
+        });
+        // Port 5001: gRPC only with HTTP/2 (h2c - HTTP/2 cleartext for internal/Cloudflare proxied traffic)
+        options.ListenAnyIP(5001, listenOptions =>
+        {
+            listenOptions.Protocols = HttpProtocols.Http2;
+        });
+    });
+}
 
 // Configure Serilog with full exception details
 builder.Host.UseSerilog((context, services, configuration) => configuration
