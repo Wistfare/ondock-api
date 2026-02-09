@@ -1,0 +1,246 @@
+syntax = "proto3";
+
+package ondock.v1;
+
+option csharp_namespace = "Ondock.Api.Grpc.V1";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+import "Protos/ondock/v1/common.proto";
+
+// LoadView Service - location-based video request system
+service LoadViewService {
+  // === Requester RPCs ===
+  
+  // Create a new LoadView request (broadcasts to nearby users)
+  rpc CreateRequest(CreateLoadViewRequestRequest) returns (LoadViewRequest);
+  
+  // Get a specific request by ID
+  rpc GetRequest(GetLoadViewRequestRequest) returns (LoadViewRequest);
+  
+  // Get user's own requests
+  rpc GetMyRequests(Empty) returns (GetMyRequestsResponse);
+  
+  // Cancel a request
+  rpc CancelRequest(CancelLoadViewRequestRequest) returns (Empty);
+  
+  // Get responses for a request
+  rpc GetResponses(GetLoadViewResponsesRequest) returns (GetLoadViewResponsesResponse);
+  
+  // Mark a response as helpful/not helpful
+  rpc MarkResponseHelpful(MarkResponseHelpfulRequest) returns (Empty);
+  
+  // === Responder RPCs ===
+  
+  // Get nearby active requests (fallback if missed notification)
+  rpc GetNearbyRequests(GetNearbyRequestsRequest) returns (GetNearbyRequestsResponse);
+  
+  // Submit a video response to a request
+  rpc SubmitResponse(SubmitLoadViewResponseRequest) returns (LoadViewResponse);
+  
+  // Start a live stream response
+  rpc StartLiveResponse(StartLiveResponseRequest) returns (StartLiveResponseResponse);
+  
+  // End a live stream response
+  rpc EndLiveResponse(EndLiveResponseRequest) returns (Empty);
+  
+  // Delete own response
+  rpc DeleteResponse(DeleteLoadViewResponseRequest) returns (Empty);
+  
+  // === Streaming RPCs ===
+  
+  // Stream nearby LoadView requests in real-time
+  // Responders subscribe to get notified of new requests in their area
+  rpc StreamNearbyRequests(StreamNearbyRequestsRequest) returns (stream LoadViewRequestEvent);
+  
+  // Stream responses for a specific request in real-time
+  // Requesters subscribe to get notified of new responses
+  rpc StreamResponses(StreamResponsesRequest) returns (stream LoadViewResponseEvent);
+}
+
+// === Enums ===
+
+enum LoadViewUrgencyLevel {
+  URGENCY_UNSPECIFIED = 0;
+  URGENCY_LOW = 1;
+  URGENCY_MEDIUM = 2;
+  URGENCY_HIGH = 3;
+  URGENCY_CRITICAL = 4;
+}
+
+enum LoadViewRequestStatus {
+  REQUEST_STATUS_UNSPECIFIED = 0;
+  REQUEST_STATUS_ACTIVE = 1;
+  REQUEST_STATUS_FULFILLED = 2;
+  REQUEST_STATUS_EXPIRED = 3;
+  REQUEST_STATUS_CANCELLED = 4;
+}
+
+enum LoadViewMediaType {
+  MEDIA_TYPE_UNSPECIFIED = 0;
+  MEDIA_TYPE_VIDEO = 1;
+  MEDIA_TYPE_IMAGE = 2;
+  MEDIA_TYPE_LIVESTREAM = 3;
+}
+
+enum LoadViewRequestEventType {
+  REQUEST_EVENT_UNSPECIFIED = 0;
+  REQUEST_EVENT_INITIAL = 1;        // Initial batch of nearby requests
+  REQUEST_EVENT_NEW = 2;            // New request created nearby
+  REQUEST_EVENT_UPDATED = 3;        // Request updated (status, response count)
+  REQUEST_EVENT_EXPIRED = 4;        // Request expired
+  REQUEST_EVENT_CANCELLED = 5;      // Request cancelled
+}
+
+enum LoadViewResponseEventType {
+  RESPONSE_EVENT_UNSPECIFIED = 0;
+  RESPONSE_EVENT_INITIAL = 1;       // Initial batch of responses
+  RESPONSE_EVENT_NEW = 2;           // New response submitted
+  RESPONSE_EVENT_LIVE_STARTED = 3;  // Live stream started
+  RESPONSE_EVENT_LIVE_ENDED = 4;    // Live stream ended
+  RESPONSE_EVENT_DELETED = 5;       // Response deleted
+}
+
+// === Core Messages ===
+
+message LoadViewRequest {
+  string request_id = 1;
+  string requester_id = 2;
+  string requester_name = 3;
+  string requester_profile_picture = 4;
+  double latitude = 5;
+  double longitude = 6;
+  int32 radius_meters = 7;
+  string request_type = 8;
+  string description = 9;
+  LoadViewUrgencyLevel urgency_level = 10;
+  LoadViewRequestStatus status = 11;
+  google.protobuf.Timestamp created_at = 12;
+  google.protobuf.Timestamp expires_at = 13;
+  int32 response_count = 14;
+  google.protobuf.DoubleValue distance_meters = 15;
+  repeated LoadViewResponse responses = 16;
+}
+
+message LoadViewResponse {
+  string response_id = 1;
+  string request_id = 2;
+  string responder_id = 3;
+  string responder_name = 4;
+  string responder_profile_picture = 5;
+  string media_url = 6;
+  string thumbnail_url = 7;
+  LoadViewMediaType media_type = 8;
+  int32 video_duration_seconds = 9;
+  string caption = 10;
+  google.protobuf.Timestamp created_at = 11;
+  google.protobuf.BoolValue was_helpful = 12;
+  bool is_live_stream = 13;
+  string live_kit_room_name = 14;
+  int32 reward_points = 15;
+}
+
+// === Request Messages ===
+
+message CreateLoadViewRequestRequest {
+  double latitude = 1;
+  double longitude = 2;
+  int32 radius_meters = 3;           // Default 1609 (1 mile)
+  string request_type = 4;
+  string description = 5;
+  LoadViewUrgencyLevel urgency_level = 6;
+  int32 expiration_minutes = 7;      // Default 30
+}
+
+message GetLoadViewRequestRequest {
+  string request_id = 1;
+}
+
+message CancelLoadViewRequestRequest {
+  string request_id = 1;
+}
+
+message GetLoadViewResponsesRequest {
+  string request_id = 1;
+}
+
+message GetNearbyRequestsRequest {
+  double latitude = 1;
+  double longitude = 2;
+  int32 radius_meters = 3;           // Default 10000 (10km)
+}
+
+message SubmitLoadViewResponseRequest {
+  string request_id = 1;
+  string media_url = 2;
+  string thumbnail_url = 3;
+  LoadViewMediaType media_type = 4;
+  int32 video_duration_seconds = 5;
+  string caption = 6;
+}
+
+message StartLiveResponseRequest {
+  string request_id = 1;
+}
+
+message EndLiveResponseRequest {
+  string response_id = 1;
+  string recording_url = 2;          // URL of recorded stream (optional)
+}
+
+message DeleteLoadViewResponseRequest {
+  string response_id = 1;
+}
+
+message MarkResponseHelpfulRequest {
+  string response_id = 1;
+  bool was_helpful = 2;
+}
+
+// === Response Messages ===
+
+message GetMyRequestsResponse {
+  repeated LoadViewRequest requests = 1;
+}
+
+message GetNearbyRequestsResponse {
+  repeated LoadViewRequest requests = 1;
+  int32 total_count = 2;
+}
+
+message GetLoadViewResponsesResponse {
+  repeated LoadViewResponse responses = 1;
+}
+
+message StartLiveResponseResponse {
+  string response_id = 1;
+  string room_name = 2;
+  string token = 3;
+  string server_url = 4;
+}
+
+// === Streaming Messages ===
+
+message StreamNearbyRequestsRequest {
+  double latitude = 1;
+  double longitude = 2;
+  int32 radius_meters = 3;           // Default 10000 (10km)
+}
+
+message StreamResponsesRequest {
+  string request_id = 1;
+}
+
+message LoadViewRequestEvent {
+  google.protobuf.Timestamp timestamp = 1;
+  LoadViewRequestEventType event_type = 2;
+  repeated LoadViewRequest requests = 3;  // For initial/batch events
+  LoadViewRequest request = 4;            // For single request events
+}
+
+message LoadViewResponseEvent {
+  google.protobuf.Timestamp timestamp = 1;
+  LoadViewResponseEventType event_type = 2;
+  repeated LoadViewResponse responses = 3;  // For initial batch
+  LoadViewResponse response = 4;            // For single response events
+}

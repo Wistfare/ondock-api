@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package ondock.v1;
+
+option csharp_namespace = "Ondock.Api.Grpc.V1";
+
+import "google/protobuf/timestamp.proto";
+import "Protos/ondock/v1/common.proto";
+
+// Encryption Service - for E2E encryption key management
+service EncryptionService {
+  // Register a public key for current user
+  rpc RegisterKey(RegisterKeyRequest) returns (PublicKeyResponse);
+  
+  // Get public key for a specific user
+  rpc GetPublicKey(GetPublicKeyRequest) returns (PublicKeyResponse);
+  
+  // Get current user's public key
+  rpc GetMyPublicKey(Empty) returns (PublicKeyResponse);
+  
+  // Initiate key exchange with another user
+  rpc InitiateKeyExchange(InitiateKeyExchangeRequest) returns (KeyExchangeResponse);
+  
+  // Get pending key exchanges for a chat
+  rpc GetPendingKeyExchanges(GetPendingKeyExchangesRequest) returns (PendingKeyExchangesResponse);
+}
+
+message RegisterKeyRequest {
+  string public_key = 1;
+  string key_type = 2; // e.g., "X25519", "RSA"
+  string device_id = 3;
+}
+
+message GetPublicKeyRequest {
+  string user_id = 1;
+}
+
+message PublicKeyResponse {
+  string user_id = 1;
+  string public_key = 2;
+  string key_type = 3;
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp expires_at = 5;
+}
+
+message InitiateKeyExchangeRequest {
+  string chat_id = 1;
+  string target_user_id = 2;
+  string ephemeral_public_key = 3;
+}
+
+message GetPendingKeyExchangesRequest {
+  string chat_id = 1;
+}
+
+message KeyExchangeResponse {
+  string exchange_id = 1;
+  string chat_id = 2;
+  string initiator_id = 3;
+  string target_id = 4;
+  string ephemeral_public_key = 5;
+  string status = 6; // pending, completed
+  google.protobuf.Timestamp created_at = 7;
+}
+
+message PendingKeyExchangesResponse {
+  repeated KeyExchangeResponse exchanges = 1;
+}

@@ -1,0 +1,352 @@
+syntax = "proto3";
+
+package ondock.v1;
+
+option csharp_namespace = "Ondock.Api.Grpc.V1";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+import "Protos/ondock/v1/common.proto";
+
+// Chat Service - handles all chat operations including real-time streaming
+service ChatService {
+  // Get all active chats for user
+  rpc GetActiveChats(GetActiveChatsRequest) returns (GetActiveChatsResponse);
+  
+  // Join or create a chat
+  rpc JoinChat(JoinChatRequest) returns (JoinChatResponse);
+  
+  // Leave a chat
+  rpc LeaveChat(LeaveChatRequest) returns (Empty);
+  
+  // Get chat message history
+  rpc GetChatHistory(GetChatHistoryRequest) returns (GetChatHistoryResponse);
+  
+  // Send a text message
+  rpc SendMessage(SendMessageRequest) returns (SendMessageResponse);
+  
+  // Send a media message (image, audio, video)
+  rpc SendMediaMessage(SendMediaMessageRequest) returns (SendMessageResponse);
+  
+  // Update presence/heartbeat
+  rpc UpdatePresence(UpdatePresenceRequest) returns (Empty);
+  
+  // Mark messages as read
+  rpc MarkAsRead(MarkAsReadRequest) returns (Empty);
+  
+  // Report a chat/participant
+  rpc ReportChat(ReportChatRequest) returns (ReportChatResponse);
+  
+  // Get chat profile
+  rpc GetChatProfile(Empty) returns (ChatProfileResponse);
+  
+  // Create/update chat profile
+  rpc UpsertChatProfile(UpsertChatProfileRequest) returns (ChatProfileResponse);
+  
+  // Get DND status
+  rpc GetDndStatus(Empty) returns (DndStatusResponse);
+  
+  // Set DND status
+  rpc SetDndStatus(SetDndStatusRequest) returns (DndStatusResponse);
+  
+  // === STREAMING RPCs for real-time ===
+  
+  // Stream chat events (messages, typing, read receipts, room ended)
+  // Client subscribes and receives all events for their active chats
+  rpc StreamChatEvents(StreamChatEventsRequest) returns (stream ChatEvent);
+  
+  // Send typing indicator (fire-and-forget style, but reliable)
+  rpc SendTypingIndicator(TypingIndicatorRequest) returns (Empty);
+  
+  // Stream chat thread updates in real-time (replaces polling GetActiveChats)
+  // Server pushes thread updates when chats are created, updated, or users move nearby
+  rpc StreamChatThreads(StreamChatThreadsRequest) returns (stream ChatThreadEvent);
+}
+
+// === Request/Response Messages ===
+
+message GetActiveChatsRequest {
+  google.protobuf.DoubleValue latitude = 1;
+  google.protobuf.DoubleValue longitude = 2;
+}
+
+message GetActiveChatsResponse {
+  repeated ChatThread chats = 1;
+  repeated NearbyUser nearby_users = 2;
+}
+
+message ChatThread {
+  string chat_id = 1;
+  string name = 2;
+  string color_name = 3;
+  string last_message = 4;
+  bool last_message_is_mine = 5;
+  google.protobuf.Timestamp updated_at = 6;
+  int32 unread_count = 7;
+  double distance_km = 8;
+  string status = 9;
+  bool is_permanent_contact = 10;
+  bool can_meet = 11;
+  int32 common_interests_count = 12;
+  string other_user_id = 13;
+}
+
+message NearbyUser {
+  string anonymous_user_id = 1;
+  string display_name = 2;
+  string color_name = 3;
+  double distance_km = 4;
+  int32 common_interests_count = 5;
+  bool is_permanent_contact = 6;
+  bool is_online = 7;
+}
+
+message JoinChatRequest {
+  string target_anonymous_user_id = 1;
+  string announcement_id = 2; // Optional - if replying to an announcement
+}
+
+message JoinChatResponse {
+  string chat_id = 1;
+  bool is_new = 2;
+  ChatThread chat = 3;
+}
+
+message LeaveChatRequest {
+  string chat_id = 1;
+}
+
+message GetChatHistoryRequest {
+  string chat_id = 1;
+  int32 take = 2;
+  string after_message_id = 3; // For pagination
+}
+
+message GetChatHistoryResponse {
+  repeated ChatMessage messages = 1;
+  bool has_more = 2;
+}
+
+message ChatMessage {
+  string message_id = 1;
+  string chat_id = 2;
+  string sender_id = 3;
+  string sender_display_name = 4;
+  string sender_color = 5;
+  bool is_mine = 6;
+  string content = 7; // Encrypted content
+  MessageType message_type = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp read_at = 10;
+  
+  // Media fields (for image/audio/video)
+  string media_url = 11;
+  string media_filename = 12;
+  int64 media_size_bytes = 13;
+  google.protobuf.Int32Value media_duration_seconds = 14;
+  
+  // Location when sent
+  google.protobuf.DoubleValue latitude = 15;
+  google.protobuf.DoubleValue longitude = 16;
+  
+  // Quoted content (for replies)
+  string quoted_content = 17;
+}
+
+enum MessageType {
+  MESSAGE_TYPE_UNSPECIFIED = 0;
+  MESSAGE_TYPE_TEXT = 1;
+  MESSAGE_TYPE_IMAGE = 2;
+  MESSAGE_TYPE_AUDIO = 3;
+  MESSAGE_TYPE_VIDEO = 4;
+  MESSAGE_TYPE_FILE = 5;
+  MESSAGE_TYPE_SYSTEM = 6;
+}
+
+message SendMessageRequest {
+  string chat_id = 1;
+  string encrypted_content = 2;
+  google.protobuf.DoubleValue latitude = 3;
+  google.protobuf.DoubleValue longitude = 4;
+  google.protobuf.DoubleValue speed_mph = 5;
+  string quoted_content = 6;
+  string client_message_id = 7; // For deduplication
+}
+
+message SendMediaMessageRequest {
+  string chat_id = 1;
+  string encrypted_content = 2; // Caption
+  MessageType message_type = 3;
+  bytes media_data = 4;
+  string media_filename = 5;
+  string media_content_type = 6;
+  google.protobuf.Int32Value duration_seconds = 7;
+  google.protobuf.DoubleValue latitude = 8;
+  google.protobuf.DoubleValue longitude = 9;
+  string client_message_id = 10;
+}
+
+message SendMessageResponse {
+  string message_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  string client_message_id = 3; // Echo back for client-side dedup
+}
+
+message UpdatePresenceRequest {
+  string chat_id = 1;
+  google.protobuf.DoubleValue latitude = 2;
+  google.protobuf.DoubleValue longitude = 3;
+  google.protobuf.DoubleValue speed_mph = 4;
+}
+
+message MarkAsReadRequest {
+  string chat_id = 1;
+}
+
+message ReportChatRequest {
+  string chat_id = 1;
+  string target_anonymous_user_id = 2;
+  string message_id = 3;
+  string reason = 4;
+  string details = 5;
+}
+
+message ReportChatResponse {
+  string report_id = 1;
+  string message = 2;
+}
+
+// === Profile Messages ===
+
+message ChatProfileResponse {
+  bool has_profile = 1;
+  string display_name = 2;
+  string color_name = 3;
+  string anonymous_user_id = 4;
+  repeated string category_ids = 5;
+  repeated string sub_category_ids = 6;
+  string vehicle_type_id = 7;
+  string vehicle_brand_id = 8;
+  string custom_vehicle_type = 9;
+  string custom_vehicle_brand = 10;
+}
+
+message UpsertChatProfileRequest {
+  string display_name = 1;
+  string color_name = 2;
+  repeated string category_ids = 3;
+  repeated string sub_category_ids = 4;
+  string vehicle_type_id = 5;
+  string vehicle_brand_id = 6;
+  string custom_vehicle_type = 7;
+  string custom_vehicle_brand = 8;
+}
+
+message DndStatusResponse {
+  bool is_enabled = 1;
+  google.protobuf.Timestamp enabled_until = 2;
+}
+
+message SetDndStatusRequest {
+  bool is_enabled = 1;
+  int32 duration_minutes = 2; // 0 = indefinite
+}
+
+// === Streaming Messages ===
+
+message StreamChatEventsRequest {
+  // Optional: only stream events for specific chat IDs
+  // If empty, stream all events for user's active chats
+  repeated string chat_ids = 1;
+  
+  // Resume from last known event
+  string last_event_id = 2;
+}
+
+message ChatEvent {
+  string event_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  
+  oneof event {
+    MessageReceivedEvent message_received = 3;
+    TypingStartedEvent typing_started = 4;
+    TypingStoppedEvent typing_stopped = 5;
+    MessagesReadEvent messages_read = 6;
+    ChatEndedEvent chat_ended = 7;
+    ParticipantJoinedEvent participant_joined = 8;
+    ParticipantLeftEvent participant_left = 9;
+    SyncRequiredEvent sync_required = 10;
+  }
+}
+
+message MessageReceivedEvent {
+  ChatMessage message = 1;
+}
+
+message TypingStartedEvent {
+  string chat_id = 1;
+  string participant_id = 2;
+  string display_name = 3;
+}
+
+message TypingStoppedEvent {
+  string chat_id = 1;
+  string participant_id = 2;
+}
+
+message MessagesReadEvent {
+  string chat_id = 1;
+  repeated string message_ids = 2;
+  string reader_id = 3;
+  google.protobuf.Timestamp read_at = 4;
+}
+
+message ChatEndedEvent {
+  string chat_id = 1;
+  string reason = 2;
+}
+
+message ParticipantJoinedEvent {
+  string chat_id = 1;
+  string participant_id = 2;
+  string display_name = 3;
+}
+
+message ParticipantLeftEvent {
+  string chat_id = 1;
+  string participant_id = 2;
+}
+
+message SyncRequiredEvent {
+  string chat_id = 1;
+  string reason = 2;
+}
+
+message TypingIndicatorRequest {
+  string chat_id = 1;
+  bool is_typing = 2;
+}
+
+// === Chat Thread Streaming Messages ===
+
+message StreamChatThreadsRequest {
+  double latitude = 1;
+  double longitude = 2;
+  google.protobuf.DoubleValue radius_miles = 3;
+}
+
+message ChatThreadEvent {
+  google.protobuf.Timestamp timestamp = 1;
+  ChatThreadEventType event_type = 2;
+  repeated ChatThread threads = 3;
+  repeated NearbyUser nearby_users = 4;
+}
+
+enum ChatThreadEventType {
+  CHAT_THREAD_EVENT_TYPE_UNSPECIFIED = 0;
+  CHAT_THREAD_EVENT_TYPE_INITIAL = 1;      // Initial batch of threads
+  CHAT_THREAD_EVENT_TYPE_THREAD_UPDATED = 2; // Thread was updated (new message, etc)
+  CHAT_THREAD_EVENT_TYPE_THREAD_CREATED = 3; // New thread created
+  CHAT_THREAD_EVENT_TYPE_THREAD_REMOVED = 4; // Thread removed (left chat)
+  CHAT_THREAD_EVENT_TYPE_NEARBY_UPDATED = 5; // Nearby users list updated
+}

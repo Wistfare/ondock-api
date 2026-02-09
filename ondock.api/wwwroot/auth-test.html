@@ -1,0 +1,861 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OnDock - Complete Auth Test</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script
+      type="text/javascript"
+      src="https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js"
+    ></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          Cantarell, sans-serif;
+        background: #ffffff;
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .header {
+        text-align: center;
+        color: #000000;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #000000;
+      }
+
+      .header h1 {
+        font-size: 2.5em;
+        margin-bottom: 10px;
+      }
+
+      .tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+
+      .tab-button {
+        padding: 12px 24px;
+        background: #ffffff;
+        border: 2px solid #000000;
+        color: #000000;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        border-radius: 0;
+        transition: all 0.3s;
+      }
+
+      .tab-button:hover {
+        background: #f0f0f0;
+      }
+
+      .tab-button.active {
+        background: #000000;
+        color: #ffffff;
+      }
+
+      .tab-content {
+        display: none;
+      }
+
+      .tab-content.active {
+        display: block;
+      }
+
+      .auth-card {
+        background: #ffffff;
+        border: 2px solid #000000;
+        border-radius: 0;
+        padding: 30px;
+        margin-bottom: 20px;
+      }
+
+      .auth-card h2 {
+        color: #000000;
+        margin-bottom: 20px;
+        font-size: 1.8em;
+        border-bottom: 1px solid #000000;
+        padding-bottom: 10px;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #000000;
+      }
+
+      .form-group input {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #000000;
+        border-radius: 0;
+        font-size: 16px;
+        transition: border-color 0.3s;
+        background: #ffffff;
+      }
+
+      .form-group input:focus {
+        outline: none;
+        border-color: #000000;
+        background: #f9f9f9;
+      }
+
+      .btn {
+        width: 100%;
+        padding: 14px;
+        border: 2px solid #000000;
+        border-radius: 0;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .btn-primary {
+        background: #000000;
+        color: #ffffff;
+      }
+
+      .btn-primary:hover {
+        background: #333333;
+      }
+
+      .btn-secondary {
+        background: #ffffff;
+        color: #000000;
+        margin-top: 10px;
+      }
+
+      .btn-secondary:hover {
+        background: #f0f0f0;
+      }
+
+      .divider {
+        text-align: center;
+        margin: 30px 0;
+        position: relative;
+      }
+
+      .divider::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: #000000;
+      }
+
+      .divider span {
+        background: #ffffff;
+        padding: 0 15px;
+        position: relative;
+        color: #000000;
+        font-weight: 600;
+      }
+
+      .oauth-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .success-box {
+        background: #ffffff;
+        border: 2px solid #000000;
+        color: #000000;
+        padding: 15px;
+        border-radius: 0;
+        margin-bottom: 20px;
+        display: none;
+      }
+
+      .error-box {
+        background: #ffffff;
+        border: 2px solid #000000;
+        color: #000000;
+        padding: 15px;
+        border-radius: 0;
+        margin-bottom: 20px;
+        display: none;
+      }
+
+      .user-info {
+        background: #f9f9f9;
+        border: 2px solid #000000;
+        padding: 20px;
+        border-radius: 0;
+        margin-top: 20px;
+      }
+
+      .user-info h3 {
+        margin-bottom: 15px;
+        color: #000000;
+        border-bottom: 1px solid #000000;
+        padding-bottom: 10px;
+      }
+
+      .user-info-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid #cccccc;
+      }
+
+      .user-info-item:last-child {
+        border-bottom: none;
+      }
+
+      .user-info-item strong {
+        color: #000000;
+        font-weight: 700;
+      }
+
+      .token-display {
+        background: #000000;
+        color: #ffffff;
+        padding: 15px;
+        border: 2px solid #000000;
+        border-radius: 0;
+        font-family: "Courier New", monospace;
+        font-size: 12px;
+        overflow-x: auto;
+        white-space: nowrap;
+        margin-top: 10px;
+      }
+
+      .loader {
+        border: 3px solid #cccccc;
+        border-top: 3px solid #000000;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 20px auto;
+        display: none;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      #g_id_onload {
+        position: absolute;
+        top: -1000px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>OnDock Platform</h1>
+        <p>Complete Authentication Testing Suite</p>
+      </div>
+
+      <div class="tabs">
+        <button class="tab-button active" onclick="showTab('login')">
+          Login
+        </button>
+        <button class="tab-button" onclick="showTab('register')">
+          Register
+        </button>
+        <button class="tab-button" onclick="showTab('reset')">
+          Reset Password
+        </button>
+        <button class="tab-button" onclick="showTab('oauth')">
+          OAuth (Google/Apple)
+        </button>
+      </div>
+
+      <!-- Login Tab -->
+      <div id="login" class="tab-content active">
+        <div class="auth-card">
+          <h2>Login</h2>
+          <div id="loginSuccess" class="success-box"></div>
+          <div id="loginError" class="error-box"></div>
+          <div id="loginLoader" class="loader"></div>
+
+          <form id="loginForm" onsubmit="handleLogin(event)">
+            <div class="form-group">
+              <label>Email</label>
+              <input
+                type="email"
+                id="loginEmail"
+                required
+                placeholder="your@email.com"
+              />
+            </div>
+            <div class="form-group">
+              <label>Password</label>
+              <input
+                type="password"
+                id="loginPassword"
+                required
+                placeholder="********"
+              />
+            </div>
+            <button type="submit" class="btn btn-primary">Login</button>
+          </form>
+
+          <div id="loginUserInfo" style="display: none"></div>
+        </div>
+      </div>
+
+      <!-- Register Tab -->
+      <div id="register" class="tab-content">
+        <div class="auth-card">
+          <h2>Create Account</h2>
+          <div id="registerSuccess" class="success-box"></div>
+          <div id="registerError" class="error-box"></div>
+          <div id="registerLoader" class="loader"></div>
+
+          <form id="registerForm" onsubmit="handleRegister(event)">
+            <div class="form-group">
+              <label>Email</label>
+              <input
+                type="email"
+                id="registerEmail"
+                required
+                placeholder="your@email.com"
+              />
+            </div>
+            <div class="form-group">
+              <label>Phone Number (Optional)</label>
+              <input type="tel" id="registerPhone" placeholder="+1234567890" />
+            </div>
+            <div class="form-group">
+              <label>Password (min 8 chars)</label>
+              <input
+                type="password"
+                id="registerPassword"
+                required
+                placeholder="********"
+                minlength="8"
+              />
+            </div>
+            <div class="form-group">
+              <label>Confirm Password</label>
+              <input
+                type="password"
+                id="registerConfirmPassword"
+                required
+                placeholder="********"
+                minlength="8"
+              />
+            </div>
+            <button type="submit" class="btn btn-primary">
+              Create Account
+            </button>
+          </form>
+
+          <div id="registerUserInfo" style="display: none"></div>
+        </div>
+      </div>
+
+      <!-- Reset Password Tab -->
+      <div id="reset" class="tab-content">
+        <div class="auth-card">
+          <h2>Reset Password</h2>
+          <div id="resetSuccess" class="success-box"></div>
+          <div id="resetError" class="error-box"></div>
+          <div id="resetLoader" class="loader"></div>
+
+          <div id="resetStep1">
+            <p style="margin-bottom: 20px; color: #666">
+              Enter your email to receive a password reset token.
+            </p>
+            <form onsubmit="handleForgotPassword(event)">
+              <div class="form-group">
+                <label>Email</label>
+                <input
+                  type="email"
+                  id="forgotEmail"
+                  required
+                  placeholder="your@email.com"
+                />
+              </div>
+              <button type="submit" class="btn btn-primary">
+                Request Reset Token
+              </button>
+            </form>
+          </div>
+
+          <div id="resetStep2" style="display: none">
+            <p style="margin-bottom: 20px; color: #666">
+              Enter the reset token and your new password.
+            </p>
+            <form onsubmit="handleResetPassword(event)">
+              <div class="form-group">
+                <label>Email</label>
+                <input
+                  type="email"
+                  id="resetEmail"
+                  required
+                  placeholder="your@email.com"
+                />
+              </div>
+              <div class="form-group">
+                <label>Reset Token</label>
+                <input
+                  type="text"
+                  id="resetToken"
+                  required
+                  placeholder="Paste token here"
+                />
+              </div>
+              <div class="form-group">
+                <label>New Password (min 8 chars)</label>
+                <input
+                  type="password"
+                  id="resetNewPassword"
+                  required
+                  placeholder="********"
+                  minlength="8"
+                />
+              </div>
+              <button type="submit" class="btn btn-primary">
+                Reset Password
+              </button>
+              <button
+                type="button"
+                class="btn btn-secondary"
+                onclick="showResetStep1()"
+              >
+                Back
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- OAuth Tab -->
+      <div id="oauth" class="tab-content">
+        <div class="auth-card">
+          <h2>OAuth Sign-In</h2>
+          <div id="oauthSuccess" class="success-box"></div>
+          <div id="oauthError" class="error-box"></div>
+          <div id="oauthLoader" class="loader"></div>
+
+          <div class="oauth-buttons">
+            <div
+              id="g_id_onload"
+              data-client_id="291513500813-02nun02l3n5e8gtq7mg2a5lgl1qbgned.apps.googleusercontent.com"
+              data-callback="handleGoogleCredentialResponse"
+              data-auto_prompt="false"
+            ></div>
+
+            <div
+              class="g_id_signin"
+              data-type="standard"
+              data-size="large"
+              data-theme="outline"
+              data-text="sign_in_with"
+              data-shape="rectangular"
+              data-logo_alignment="left"
+              data-width="400"
+            ></div>
+
+            <div class="divider"><span>OR</span></div>
+
+            <div
+              id="appleid-signin"
+              data-color="black"
+              data-border="true"
+              data-type="sign in"
+              data-width="400"
+              data-height="50"
+            ></div>
+          </div>
+
+          <div id="oauthUserInfo" style="display: none"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Auto-detect API URL
+      const isLocalhost =
+        window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1";
+      const API_BASE_URL = isLocalhost
+        ? "http://localhost:5028/api/v1"
+        : `${window.location.origin}/api/v1`;
+
+      console.log("API Base URL:", API_BASE_URL);
+
+      // Initialize Apple Sign-In
+      window.onload = function () {
+        const redirectURI = isLocalhost
+          ? "http://localhost:5028/api/v1/auth/apple/callback"
+          : "https://dev-api-ondock.ondock.app/api/v1/auth/apple/callback";
+
+        AppleID.auth.init({
+          clientId: "com.ondock.api.service",
+          scope: "name email",
+          redirectURI: redirectURI,
+          usePopup: true,
+        });
+
+        console.log("OAuth initialized");
+      };
+
+      // Tab switching
+      function showTab(tabName) {
+        document
+          .querySelectorAll(".tab-content")
+          .forEach((tab) => tab.classList.remove("active"));
+        document
+          .querySelectorAll(".tab-button")
+          .forEach((btn) => btn.classList.remove("active"));
+
+        document.getElementById(tabName).classList.add("active");
+        event.target.classList.add("active");
+      }
+
+      // Login
+      async function handleLogin(event) {
+        event.preventDefault();
+        showLoader("login", true);
+        hideMessages("login");
+
+        const email = document.getElementById("loginEmail").value;
+        const password = document.getElementById("loginPassword").value;
+
+        try {
+          const response = await fetch(`${API_BASE_URL}/auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email,
+              password,
+              deviceId: "web-test-device",
+            }),
+          });
+
+          const data = await response.json();
+          showLoader("login", false);
+
+          if (response.ok) {
+            showSuccess("login", "Login successful!");
+            displayUserInfo("login", data);
+          } else {
+            showError("login", data.error?.message || JSON.stringify(data));
+          }
+        } catch (error) {
+          showLoader("login", false);
+          showError("login", error.message);
+        }
+      }
+
+      // Register
+      async function handleRegister(event) {
+        event.preventDefault();
+        showLoader("register", true);
+        hideMessages("register");
+
+        const email = document.getElementById("registerEmail").value;
+        const phone = document.getElementById("registerPhone").value;
+        const password = document.getElementById("registerPassword").value;
+        const confirmPassword = document.getElementById(
+          "registerConfirmPassword",
+        ).value;
+
+        if (password !== confirmPassword) {
+          showLoader("register", false);
+          showError("register", "Passwords do not match");
+          return;
+        }
+
+        try {
+          const response = await fetch(`${API_BASE_URL}/auth/register`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email,
+              phoneNumber: phone || null,
+              password,
+              deviceId: "web-test-device",
+              confirmPassword,
+            }),
+          });
+
+          const data = await response.json();
+          showLoader("register", false);
+
+          if (response.ok) {
+            showSuccess(
+              "register",
+              "Registration successful! You are now logged in.",
+            );
+            displayUserInfo("register", data);
+            document.getElementById("registerForm").reset();
+          } else {
+            showError("register", data.error?.message || JSON.stringify(data));
+          }
+        } catch (error) {
+          showLoader("register", false);
+          showError("register", error.message);
+        }
+      }
+
+      // Forgot Password
+      async function handleForgotPassword(event) {
+        event.preventDefault();
+        showLoader("reset", true);
+        hideMessages("reset");
+
+        const email = document.getElementById("forgotEmail").value;
+
+        try {
+          const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email }),
+          });
+
+          const data = await response.json();
+          showLoader("reset", false);
+
+          if (response.ok) {
+            showSuccess(
+              "reset",
+              `Reset token generated! Token: <strong>${data.resetToken}</strong><br>Copy this token to reset your password.`,
+            );
+            document.getElementById("resetEmail").value = email;
+            document.getElementById("resetToken").value = data.resetToken;
+            showResetStep2();
+          } else {
+            showError("reset", data.error?.message || JSON.stringify(data));
+          }
+        } catch (error) {
+          showLoader("reset", false);
+          showError("reset", error.message);
+        }
+      }
+
+      // Reset Password
+      async function handleResetPassword(event) {
+        event.preventDefault();
+        showLoader("reset", true);
+        hideMessages("reset");
+
+        const email = document.getElementById("resetEmail").value;
+        const token = document.getElementById("resetToken").value;
+        const newPassword = document.getElementById("resetNewPassword").value;
+
+        try {
+          const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, token, newPassword }),
+          });
+
+          const data = await response.json();
+          showLoader("reset", false);
+
+          if (response.ok) {
+            showSuccess(
+              "reset",
+              "Password reset successful! You can now login with your new password.",
+            );
+            setTimeout(() => {
+              showTab("login");
+              showResetStep1();
+            }, 2000);
+          } else {
+            showError("reset", data.error?.message || JSON.stringify(data));
+          }
+        } catch (error) {
+          showLoader("reset", false);
+          showError("reset", error.message);
+        }
+      }
+
+      // Google OAuth
+      function handleGoogleCredentialResponse(response) {
+        authenticateWithOAuth(response.credential, "Google");
+      }
+
+      // Apple OAuth
+      document.addEventListener("AppleIDSignInOnSuccess", (event) => {
+        authenticateWithOAuth(event.detail.authorization.id_token, "Apple");
+      });
+
+      document.addEventListener("AppleIDSignInOnFailure", (event) => {
+        showError(
+          "oauth",
+          "Apple Sign-In failed: " + JSON.stringify(event.detail),
+        );
+      });
+
+      async function authenticateWithOAuth(idToken, provider) {
+        showLoader("oauth", true);
+        hideMessages("oauth");
+
+        try {
+          const response = await fetch(
+            `${API_BASE_URL}/auth/oauth/${provider.toLowerCase()}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                idToken,
+                provider,
+                deviceId: "web-test-device",
+              }),
+            },
+          );
+
+          const data = await response.json();
+          showLoader("oauth", false);
+
+          if (response.ok) {
+            showSuccess("oauth", `${provider} authentication successful!`);
+            displayUserInfo("oauth", data);
+          } else {
+            showError("oauth", data.error?.message || JSON.stringify(data));
+          }
+        } catch (error) {
+          showLoader("oauth", false);
+          showError("oauth", error.message);
+        }
+      }
+
+      // Helper functions
+      function showResetStep1() {
+        document.getElementById("resetStep1").style.display = "block";
+        document.getElementById("resetStep2").style.display = "none";
+        hideMessages("reset");
+      }
+
+      function showResetStep2() {
+        document.getElementById("resetStep1").style.display = "none";
+        document.getElementById("resetStep2").style.display = "block";
+      }
+
+      function showLoader(prefix, show) {
+        document.getElementById(`${prefix}Loader`).style.display = show
+          ? "block"
+          : "none";
+      }
+
+      function showSuccess(prefix, message) {
+        const elem = document.getElementById(`${prefix}Success`);
+        elem.innerHTML = message;
+        elem.style.display = "block";
+      }
+
+      function showError(prefix, message) {
+        const elem = document.getElementById(`${prefix}Error`);
+        elem.innerHTML = message;
+        elem.style.display = "block";
+      }
+
+      function hideMessages(prefix) {
+        document.getElementById(`${prefix}Success`).style.display = "none";
+        document.getElementById(`${prefix}Error`).style.display = "none";
+      }
+
+      function displayUserInfo(prefix, data) {
+        const container = document.getElementById(`${prefix}UserInfo`);
+        container.style.display = "block";
+        container.innerHTML = `
+                <div class="user-info">
+                    <h3>✅ Authenticated Successfully</h3>
+                    <div class="user-info-item">
+                        <span>User ID:</span>
+                        <strong>${data.user.userId}</strong>
+                    </div>
+                    <div class="user-info-item">
+                        <span>Email:</span>
+                        <strong>${data.user.email}</strong>
+                    </div>
+                    <div class="user-info-item">
+                        <span>Phone:</span>
+                        <strong>${data.user.phoneNumber || "Not set"}</strong>
+                    </div>
+                    <div class="user-info-item">
+                        <span>Provider:</span>
+                        <strong>${
+                          data.user.oAuthProvider || "Email/Password"
+                        }</strong>
+                    </div>
+                    <div class="user-info-item">
+                        <span>Email Confirmed:</span>
+                        <strong>${
+                          data.user.emailConfirmed ? "✅ Yes" : "❌ No"
+                        }</strong>
+                    </div>
+                    <h3 style="margin-top: 20px;">Access Token</h3>
+                    <div class="token-display">${data.accessToken.substring(
+                      0,
+                      100,
+                    )}...</div>
+                    <h3 style="margin-top: 20px;">Refresh Token</h3>
+                    <div class="token-display">${data.refreshToken.substring(
+                      0,
+                      100,
+                    )}...</div>
+                    <button class="btn btn-primary" style="margin-top: 20px;" onclick="testProtectedEndpoint('${
+                      data.accessToken
+                    }')">
+                        Test Protected Endpoint (/me)
+                    </button>
+                </div>
+            `;
+      }
+
+      async function testProtectedEndpoint(accessToken) {
+        try {
+          const response = await fetch(`${API_BASE_URL}/auth/me`, {
+            method: "GET",
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            alert(
+              "✅ Protected endpoint test successful!\n\n" +
+                JSON.stringify(data, null, 2),
+            );
+          } else {
+            alert(
+              "❌ Protected endpoint test failed!\n\n" +
+                JSON.stringify(data, null, 2),
+            );
+          }
+        } catch (error) {
+          alert("❌ Error: " + error.message);
+        }
+      }
+    </script>
+  </body>
+</html>

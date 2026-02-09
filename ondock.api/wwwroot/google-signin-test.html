@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OnDock - OAuth Sign-In Test</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script
+      type="text/javascript"
+      src="https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js"
+    ></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 50px auto;
+        padding: 20px;
+        background: #f5f5f5;
+      }
+      .container {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        color: #333;
+        margin-bottom: 30px;
+      }
+      .sign-in-section {
+        margin: 20px 0;
+        padding: 20px;
+        background: #f9f9f9;
+        border-radius: 5px;
+      }
+      .response-section {
+        margin-top: 30px;
+        padding: 20px;
+        background: #e8f5e9;
+        border-radius: 5px;
+        display: none;
+      }
+      .error-section {
+        margin-top: 30px;
+        padding: 20px;
+        background: #ffebee;
+        border-radius: 5px;
+        display: none;
+      }
+      pre {
+        background: #263238;
+        color: #aed581;
+        padding: 15px;
+        border-radius: 5px;
+        overflow-x: auto;
+      }
+      .user-info {
+        margin: 10px 0;
+        padding: 10px;
+        background: white;
+        border-left: 4px solid #4caf50;
+      }
+      #g_id_onload {
+        position: absolute;
+        top: 100px;
+        right: 50px;
+      }
+      .provider-label {
+        display: inline-block;
+        padding: 4px 12px;
+        background: #4caf50;
+        color: white;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: bold;
+        margin-left: 10px;
+      }
+      .apple-label {
+        background: #000;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>OnDock Platform - OAuth Sign-In Test</h1>
+
+      <div class="sign-in-section">
+        <h2>Google Sign-In <span class="provider-label">GOOGLE</span></h2>
+        <p>Click the button below to sign in with your Google account.</p>
+
+        <div
+          id="g_id_onload"
+          data-client_id="291513500813-02nun02l3n5e8gtq7mg2a5lgl1qbgned.apps.googleusercontent.com"
+          data-callback="handleGoogleCredentialResponse"
+          data-auto_prompt="false"
+        ></div>
+
+        <div
+          class="g_id_signin"
+          data-type="standard"
+          data-size="large"
+          data-theme="outline"
+          data-text="sign_in_with"
+          data-shape="rectangular"
+          data-logo_alignment="left"
+        ></div>
+      </div>
+
+      <div class="sign-in-section">
+        <h2>
+          Apple Sign-In <span class="provider-label apple-label">APPLE</span>
+        </h2>
+        <p>Click the button below to sign in with your Apple ID.</p>
+
+        <div
+          id="appleid-signin"
+          data-color="black"
+          data-border="true"
+          data-type="sign in"
+          data-mode="left-align"
+          style="margin-top: 10px"
+        ></div>
+      </div>
+
+      <div class="response-section" id="responseSection">
+        <h2>✅ Authentication Successful!</h2>
+        <div id="responseContent"></div>
+      </div>
+
+      <div class="error-section" id="errorSection">
+        <h2>Authentication Failed</h2>
+        <div id="errorContent"></div>
+      </div>
+    </div>
+
+    <script>
+      // Auto-detect API URL based on current location
+      const isLocalhost =
+        window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1";
+      const API_BASE_URL = isLocalhost
+        ? "http://localhost:5028/api/v1"
+        : `${window.location.origin}/api/v1`;
+
+      console.log("API Base URL:", API_BASE_URL);
+
+      // Initialize Apple Sign-In
+      window.onload = function () {
+        const redirectURI = isLocalhost
+          ? "http://localhost:5028/api/v1/auth/apple/callback"
+          : "https://dev-api-ondock.ondock.app/api/v1/auth/apple/callback";
+
+        AppleID.auth.init({
+          clientId: "com.ondock.api.service",
+          scope: "name email",
+          redirectURI: redirectURI,
+          usePopup: true,
+        });
+
+        console.log("Google & Apple Sign-In initialized");
+        console.log("Apple Redirect URI:", redirectURI);
+      };
+
+      // Google Sign-In Handler
+      function handleGoogleCredentialResponse(response) {
+        console.log("Google JWT ID token received");
+        authenticateWithGoogle(response.credential);
+      }
+
+      async function authenticateWithGoogle(idToken) {
+        try {
+          const response = await fetch(`${API_BASE_URL}/auth/oauth/google`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              idToken: idToken,
+              provider: "Google",
+              deviceId: "web-test-device",
+            }),
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            showSuccess(data, "Google");
+          } else {
+            showError(data);
+          }
+        } catch (error) {
+          showError({ error: error.message });
+        }
+      }
+
+      // Apple Sign-In Handlers
+      document.addEventListener("AppleIDSignInOnSuccess", async (event) => {
+        console.log("Apple Sign-In Success:", event.detail);
+        authenticateWithApple(event.detail.authorization.id_token);
+      });
+
+      document.addEventListener("AppleIDSignInOnFailure", (event) => {
+        console.error("Apple Sign-In Failed:", event.detail);
+        showError({ error: "Apple Sign-In failed", details: event.detail });
+      });
+
+      async function authenticateWithApple(idToken) {
+        try {
+          const response = await fetch(`${API_BASE_URL}/auth/oauth/apple`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              idToken: idToken,
+              provider: "Apple",
+              deviceId: "web-test-device",
+            }),
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            showSuccess(data, "Apple");
+          } else {
+            showError(data);
+          }
+        } catch (error) {
+          showError({ error: error.message });
+        }
+      }
+
+      function showSuccess(data, provider) {
+        document.getElementById("responseSection").style.display = "block";
+        document.getElementById("errorSection").style.display = "none";
+
+        // Scroll to response
+        document
+          .getElementById("responseSection")
+          .scrollIntoView({ behavior: "smooth" });
+
+        const html = `
+                <div style="background: ${
+                  provider === "Apple" ? "#000" : "#4CAF50"
+                }; color: white; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+                    <strong>✅ ${provider} Authentication Successful!</strong>
+                </div>
+                <div class="user-info">
+                    <strong>User ID:</strong> ${data.user.userId}<br>
+                    <strong>Email:</strong> ${data.user.email}<br>
+                    <strong>Phone:</strong> ${
+                      data.user.phoneNumber || "Not set"
+                    }<br>
+                    <strong>Email Confirmed:</strong> ${
+                      data.user.emailConfirmed
+                    }<br>
+                    <strong>2FA Enabled:</strong> ${
+                      data.user.twoFactorEnabled
+                    }<br>
+                    <strong>OAuth Provider:</strong> ${
+                      data.user.oAuthProvider
+                    }<br>
+                </div>
+                <h3>Access Token:</h3>
+                <pre>${data.accessToken.substring(0, 100)}...</pre>
+                <h3>Refresh Token:</h3>
+                <pre>${data.refreshToken.substring(0, 100)}...</pre>
+                <p><strong>Expires At:</strong> ${new Date(
+                  data.expiresAt,
+                ).toLocaleString()}</p>
+                <button onclick="testProtectedEndpoint('${
+                  data.accessToken
+                }')" style="padding: 10px 20px; background: #2196F3; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px;">
+                    Test Protected Endpoint (/me)
+                </button>
+            `;
+
+        document.getElementById("responseContent").innerHTML = html;
+      }
+
+      function showError(error) {
+        document.getElementById("errorSection").style.display = "block";
+        document.getElementById("responseSection").style.display = "none";
+
+        // Scroll to error
+        document
+          .getElementById("errorSection")
+          .scrollIntoView({ behavior: "smooth" });
+
+        document.getElementById("errorContent").innerHTML =
+          `<pre>${JSON.stringify(error, null, 2)}</pre>`;
+      }
+
+      // Test protected endpoint
+      async function testProtectedEndpoint(accessToken) {
+        try {
+          const response = await fetch(`${API_BASE_URL}/auth/me`, {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            alert(
+              "Protected endpoint test successful!\n\n" +
+                JSON.stringify(data, null, 2),
+            );
+          } else {
+            alert(
+              "Protected endpoint test failed!\n\n" +
+                JSON.stringify(data, null, 2),
+            );
+          }
+        } catch (error) {
+          alert("Error testing protected endpoint: " + error.message);
+        }
+      }
+    </script>
+  </body>
+</html>

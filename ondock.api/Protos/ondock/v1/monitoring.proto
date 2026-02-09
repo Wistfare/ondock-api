@@ -1,0 +1,148 @@
+syntax = "proto3";
+
+package ondock.v1;
+
+option csharp_namespace = "Ondock.Api.Grpc.V1";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+import "Protos/ondock/v1/common.proto";
+
+// Monitoring Service - for LiveKit video monitoring sessions
+service MonitoringService {
+  // Start a new monitoring session
+  rpc StartSession(StartSessionRequest) returns (MonitoringSessionResponse);
+  
+  // End a monitoring session
+  rpc EndSession(EndSessionRequest) returns (MonitoringSessionResponse);
+  
+  // Get user's monitoring sessions
+  rpc GetSessions(GetSessionsRequest) returns (GetSessionsResponse);
+  
+  // Join an existing session as viewer
+  rpc JoinSession(JoinSessionRequest) returns (Empty);
+  
+  // Update monitoring status
+  rpc UpdateStatus(UpdateStatusRequest) returns (Empty);
+  
+  // Request stream from a participant
+  rpc RequestStream(RequestStreamRequest) returns (Empty);
+  
+  // Update stream state
+  rpc UpdateStreamState(UpdateStreamStateRequest) returns (Empty);
+  
+  // Get LiveKit token for session
+  rpc GetToken(GetTokenRequest) returns (LiveKitTokenResponse);
+  
+  // Stream monitoring events
+  rpc StreamMonitoringEvents(StreamMonitoringEventsRequest) returns (stream MonitoringEvent);
+}
+
+message StartSessionRequest {
+  string session_name = 1;
+  string description = 2;
+  google.protobuf.DoubleValue latitude = 3;
+  google.protobuf.DoubleValue longitude = 4;
+}
+
+message EndSessionRequest {
+  string session_id = 1;
+}
+
+message GetSessionsRequest {
+  int32 take = 1;
+}
+
+message GetSessionsResponse {
+  repeated MonitoringSessionResponse sessions = 1;
+}
+
+message MonitoringSessionResponse {
+  string session_id = 1;
+  string session_name = 2;
+  string description = 3;
+  string status = 4;
+  string owner_id = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp ended_at = 7;
+  int32 participant_count = 8;
+  string room_name = 9;
+}
+
+message JoinSessionRequest {
+  string session_id = 1;
+  string device_id = 2;
+}
+
+message UpdateStatusRequest {
+  string session_id = 1;
+  google.protobuf.DoubleValue latitude = 2;
+  google.protobuf.DoubleValue longitude = 3;
+  google.protobuf.DoubleValue speed_mph = 4;
+  string status_message = 5;
+}
+
+message RequestStreamRequest {
+  string session_id = 1;
+  string target_participant_id = 2;
+  string stream_type = 3; // "video", "audio", "screen"
+}
+
+message UpdateStreamStateRequest {
+  string session_id = 1;
+  bool is_streaming = 2;
+  string stream_type = 3;
+}
+
+message GetTokenRequest {
+  string session_id = 1;
+  string device_id = 2;
+}
+
+message LiveKitTokenResponse {
+  string token = 1;
+  string room_name = 2;
+  string server_url = 3;
+  google.protobuf.Timestamp expires_at = 4;
+}
+
+message StreamMonitoringEventsRequest {
+  string session_id = 1;
+}
+
+message MonitoringEvent {
+  string event_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  string session_id = 3;
+  
+  oneof event {
+    ParticipantStatusEvent participant_status = 4;
+    StreamRequestEvent stream_request = 5;
+    StreamStateChangedEvent stream_state_changed = 6;
+    SessionEndedEvent session_ended = 7;
+  }
+}
+
+message ParticipantStatusEvent {
+  string participant_id = 1;
+  google.protobuf.DoubleValue latitude = 2;
+  google.protobuf.DoubleValue longitude = 3;
+  google.protobuf.DoubleValue speed_mph = 4;
+  string status_message = 5;
+}
+
+message StreamRequestEvent {
+  string requester_id = 1;
+  string target_participant_id = 2;
+  string stream_type = 3;
+}
+
+message StreamStateChangedEvent {
+  string participant_id = 1;
+  bool is_streaming = 2;
+  string stream_type = 3;
+}
+
+message SessionEndedEvent {
+  string reason = 1;
+}

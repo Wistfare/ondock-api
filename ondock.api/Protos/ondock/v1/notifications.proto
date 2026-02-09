@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package ondock.v1;
+
+option csharp_namespace = "Ondock.Api.Grpc.V1";
+
+import "Protos/ondock/v1/common.proto";
+
+// Notifications Service
+service NotificationsService {
+  // Register device token for push notifications
+  rpc RegisterDeviceToken(RegisterDeviceTokenRequest) returns (Empty);
+  
+  // Unregister device token
+  rpc UnregisterDeviceToken(UnregisterDeviceTokenRequest) returns (Empty);
+}
+
+message RegisterDeviceTokenRequest {
+  string device_token = 1;
+  string device_id = 2;
+  string platform = 3; // "ios", "android", "web"
+}
+
+message UnregisterDeviceTokenRequest {
+  string device_id = 1;
+}

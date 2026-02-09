@@ -1,0 +1,156 @@
+syntax = "proto3";
+
+package ondock.v1;
+
+option csharp_namespace = "Ondock.Api.Grpc.V1";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+// User Status/Story Service (WhatsApp-like)
+service StatusService {
+  // Create a new status (text, image, or video)
+  rpc CreateStatus(CreateStatusRequest) returns (CreateStatusResponse);
+  
+  // Get current user's active statuses
+  rpc GetMyStatuses(google.protobuf.Empty) returns (GetMyStatusesResponse);
+  
+  // Get another user's statuses by their anonymous ID
+  rpc GetUserStatuses(GetUserStatusesRequest) returns (GetUserStatusesResponse);
+  
+  // Get nearby users who have active statuses
+  rpc GetNearbyUsersWithStatuses(GetNearbyUsersWithStatusesRequest) returns (GetNearbyUsersWithStatusesResponse);
+  
+  // Delete a status
+  rpc DeleteStatus(DeleteStatusRequest) returns (google.protobuf.Empty);
+  
+  // Record that the current user viewed a status
+  rpc RecordStatusView(RecordStatusViewRequest) returns (google.protobuf.Empty);
+  
+  // Record multiple status views in a single batch call (more efficient)
+  rpc RecordStatusViewsBatch(RecordStatusViewsBatchRequest) returns (google.protobuf.Empty);
+  
+  // Stream nearby users with statuses in real-time (replaces polling GetNearbyUsersWithStatuses)
+  rpc StreamNearbyUsersWithStatuses(StreamNearbyUsersWithStatusesRequest) returns (stream NearbyUsersWithStatusesEvent);
+}
+
+enum StatusPostType {
+  STATUS_POST_TYPE_UNSPECIFIED = 0;
+  TEXT = 1;
+  IMAGE = 2;
+  VIDEO = 3;
+}
+
+message UserStatus {
+  string post_id = 1;
+  string user_id = 2;
+  string author_display_name = 3;
+  string author_color = 4;
+  StatusPostType post_type = 5;
+  
+  // Text content (for text posts or captions)
+  optional string text_content = 6;
+  
+  // Background for text posts
+  optional string background_color = 7;
+  optional string background_image_url = 8;
+  optional float text_position_x = 9;
+  optional float text_position_y = 10;
+  
+  // Media for image/video posts
+  optional string media_url = 11;
+  optional string thumbnail_url = 12;
+  optional int32 duration_seconds = 13;
+  
+  google.protobuf.Timestamp created_at = 14;
+  google.protobuf.Timestamp expires_at = 15;
+  int32 view_count = 16;
+  bool is_mine = 17;
+}
+
+message CreateStatusRequest {
+  StatusPostType post_type = 1;
+  optional string text_content = 2;
+  optional string background_color = 3;
+  optional string background_image_url = 4;
+  optional float text_position_x = 5;
+  optional float text_position_y = 6;
+  optional string media_url = 7;
+  optional string thumbnail_url = 8;
+  optional int32 duration_seconds = 9;
+}
+
+message CreateStatusResponse {
+  UserStatus status = 1;
+}
+
+message GetMyStatusesResponse {
+  repeated UserStatus statuses = 1;
+}
+
+message GetUserStatusesRequest {
+  string anonymous_user_id = 1;
+}
+
+message GetUserStatusesResponse {
+  string user_id = 1;
+  string display_name = 2;
+  string color = 3;
+  int32 post_count = 4;
+  optional google.protobuf.Timestamp last_post_at = 5;
+  repeated UserStatus statuses = 6;
+}
+
+message GetNearbyUsersWithStatusesRequest {
+  double latitude = 1;
+  double longitude = 2;
+  optional double radius_miles = 3;
+}
+
+message NearbyUserWithStatuses {
+  string anonymous_user_id = 1;
+  string display_name = 2;
+  string color = 3;
+  double latitude = 4;
+  double longitude = 5;
+  double distance_miles = 6;
+  int32 post_count = 7;
+  bool has_unseen_posts = 8;
+}
+
+message GetNearbyUsersWithStatusesResponse {
+  repeated NearbyUserWithStatuses users = 1;
+}
+
+message DeleteStatusRequest {
+  string post_id = 1;
+}
+
+message RecordStatusViewRequest {
+  string post_id = 1;
+}
+
+message RecordStatusViewsBatchRequest {
+  repeated string post_ids = 1;
+}
+
+// === Status Streaming Messages ===
+
+message StreamNearbyUsersWithStatusesRequest {
+  double latitude = 1;
+  double longitude = 2;
+  optional double radius_miles = 3;
+}
+
+message NearbyUsersWithStatusesEvent {
+  google.protobuf.Timestamp timestamp = 1;
+  NearbyUsersWithStatusesEventType event_type = 2;
+  repeated NearbyUserWithStatuses users = 3;
+}
+
+enum NearbyUsersWithStatusesEventType {
+  NEARBY_USERS_WITH_STATUSES_EVENT_TYPE_UNSPECIFIED = 0;
+  NEARBY_USERS_WITH_STATUSES_EVENT_TYPE_INITIAL = 1;
+  NEARBY_USERS_WITH_STATUSES_EVENT_TYPE_USER_UPDATED = 2;
+  NEARBY_USERS_WITH_STATUSES_EVENT_TYPE_USER_LEFT = 3;
+}

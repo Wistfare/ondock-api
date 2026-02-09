@@ -1,0 +1,152 @@
+syntax = "proto3";
+
+package ondock.v1;
+
+option csharp_namespace = "Ondock.Api.Grpc.V1";
+
+import "google/protobuf/timestamp.proto";
+import "Protos/ondock/v1/common.proto";
+
+// Authentication Service
+service AuthService {
+  // Register a new user
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+  
+  // Login with email/password
+  rpc Login(LoginRequest) returns (AuthResponse);
+  
+  // OAuth login (Google/Apple)
+  rpc OAuthLogin(OAuthLoginRequest) returns (AuthResponse);
+  
+  // Refresh access token
+  rpc RefreshToken(RefreshTokenRequest) returns (AuthResponse);
+  
+  // Logout
+  rpc Logout(LogoutRequest) returns (Empty);
+  
+  // Revoke all sessions
+  rpc RevokeAllSessions(Empty) returns (Empty);
+  
+  // Forgot password - request reset token
+  rpc ForgotPassword(ForgotPasswordRequest) returns (SuccessResponse);
+  
+  // Reset password using token
+  rpc ResetPassword(ResetPasswordRequest) returns (SuccessResponse);
+  
+  // Change password (authenticated)
+  rpc ChangePassword(ChangePasswordRequest) returns (SuccessResponse);
+  
+  // Confirm email
+  rpc ConfirmEmail(ConfirmEmailRequest) returns (SuccessResponse);
+  
+  // Resend confirmation email
+  rpc ResendConfirmationEmail(ResendConfirmationEmailRequest) returns (SuccessResponse);
+  
+  // Send confirmation code
+  rpc SendConfirmationCode(SendConfirmationCodeRequest) returns (ConfirmationCodeResponse);
+  
+  // Verify confirmation code
+  rpc VerifyConfirmationCode(VerifyConfirmationCodeRequest) returns (ConfirmationCodeResponse);
+  
+  // Get current user info
+  rpc GetCurrentUser(Empty) returns (UserResponse);
+  
+  // Delete account
+  rpc DeleteAccount(Empty) returns (SuccessResponse);
+}
+
+message RegisterRequest {
+  string email = 1;
+  string password = 2;
+  string first_name = 3;
+  string last_name = 4;
+  string phone_number = 5;
+}
+
+message RegisterResponse {
+  string user_id = 1;
+  string email = 2;
+  bool requires_email_confirmation = 3;
+  string message = 4;
+}
+
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+  string device_id = 3;
+}
+
+message OAuthLoginRequest {
+  string id_token = 1;
+  string provider = 2; // "Google" or "Apple"
+  string device_id = 3;
+}
+
+message RefreshTokenRequest {
+  string refresh_token = 1;
+}
+
+message AuthResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+  google.protobuf.Timestamp expires_at = 3;
+  string user_id = 4;
+  string email = 5;
+  string first_name = 6;
+  string last_name = 7;
+  bool email_confirmed = 8;
+}
+
+message LogoutRequest {
+  string device_id = 1; // Optional - if empty, logout from all devices
+}
+
+message ForgotPasswordRequest {
+  string email = 1;
+}
+
+message ResetPasswordRequest {
+  string email = 1;
+  string token = 2;
+  string new_password = 3;
+}
+
+message ChangePasswordRequest {
+  string current_password = 1;
+  string new_password = 2;
+}
+
+message ConfirmEmailRequest {
+  string email = 1;
+  string token = 2;
+}
+
+message ResendConfirmationEmailRequest {
+  string email = 1;
+}
+
+message SendConfirmationCodeRequest {
+  string email = 1;
+}
+
+message VerifyConfirmationCodeRequest {
+  string email = 1;
+  string code = 2;
+}
+
+message ConfirmationCodeResponse {
+  bool success = 1;
+  string message = 2;
+  bool email_confirmed = 3;
+}
+
+message UserResponse {
+  string user_id = 1;
+  string email = 2;
+  string first_name = 3;
+  string last_name = 4;
+  string phone_number = 5;
+  bool email_confirmed = 6;
+  bool two_factor_enabled = 7;
+  string oauth_provider = 8;
+}

@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package ondock.v1;
+
+option csharp_namespace = "Ondock.Api.Grpc.V1";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+// Common pagination cursor for incremental sync
+message Cursor {
+  string value = 1;
+  google.protobuf.Timestamp timestamp = 2;
+}
+
+// Geographic location
+message Location {
+  double latitude = 1;
+  double longitude = 2;
+  google.protobuf.DoubleValue speed_mph = 3;
+}
+
+// Empty request/response for simple RPCs
+message Empty {}
+
+// Generic success response
+message SuccessResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Error details (used in RPC status)
+message ErrorDetail {
+  string field = 1;
+  string message = 2;
+}

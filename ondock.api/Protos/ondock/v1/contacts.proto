@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package ondock.v1;
+
+option csharp_namespace = "Ondock.Api.Grpc.V1";
+
+import "google/protobuf/timestamp.proto";
+import "Protos/ondock/v1/common.proto";
+
+// Contacts Service - for QR code identity exchange and permanent contacts
+service ContactsService {
+  // Generate QR code data for identity exchange
+  rpc GenerateQrCode(Empty) returns (GenerateQrCodeResponse);
+  
+  // Scan and process QR code
+  rpc ScanQrCode(ScanQrCodeRequest) returns (ScanQrCodeResponse);
+  
+  // Get list of permanent contacts
+  rpc GetPermanentContacts(Empty) returns (GetPermanentContactsResponse);
+  
+  // Check if user is a permanent contact
+  rpc IsPermanentContact(IsPermanentContactRequest) returns (IsPermanentContactResponse);
+  
+  // Remove a permanent contact
+  rpc RemovePermanentContact(RemovePermanentContactRequest) returns (Empty);
+}
+
+message GenerateQrCodeResponse {
+  string qr_data = 1;
+  google.protobuf.Timestamp expires_at = 2;
+}
+
+message ScanQrCodeRequest {
+  string qr_data = 1;
+}
+
+message ScanQrCodeResponse {
+  bool success = 1;
+  string message = 2;
+  string contact_id = 3;
+  string contact_display_name = 4;
+}
+
+message GetPermanentContactsResponse {
+  repeated PermanentContact contacts = 1;
+}
+
+message PermanentContact {
+  string contact_id = 1;
+  string user_id = 2;
+  string display_name = 3;
+  string color_name = 4;
+  google.protobuf.Timestamp added_at = 5;
+}
+
+message IsPermanentContactRequest {
+  string anonymous_user_id = 1;
+}
+
+message IsPermanentContactResponse {
+  bool is_permanent_contact = 1;
+}
+
+message RemovePermanentContactRequest {
+  string contact_id = 1;
+}

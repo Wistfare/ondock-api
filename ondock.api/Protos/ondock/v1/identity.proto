@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package ondock.v1;
+
+option csharp_namespace = "Ondock.Api.Grpc.V1";
+
+import "google/protobuf/timestamp.proto";
+import "Protos/ondock/v1/common.proto";
+
+// Identity Service - for identity reveal operations
+service IdentityService {
+  // Request identity reveal from another user
+  rpc RequestReveal(RequestRevealRequest) returns (IdentityRevealResponse);
+  
+  // Accept an identity reveal request
+  rpc AcceptReveal(AcceptRevealRequest) returns (IdentityRevealResponse);
+  
+  // Decline an identity reveal request
+  rpc DeclineReveal(DeclineRevealRequest) returns (Empty);
+  
+  // Get identity reveal status for a chat
+  rpc GetRevealStatus(GetRevealStatusRequest) returns (IdentityRevealResponse);
+  
+  // Get all pending reveal requests for current user
+  rpc GetPendingRequests(Empty) returns (PendingRevealRequestsResponse);
+}
+
+message RequestRevealRequest {
+  string chat_id = 1;
+  string target_anonymous_user_id = 2;
+}
+
+message AcceptRevealRequest {
+  string chat_id = 1;
+  string requester_id = 2;
+}
+
+message DeclineRevealRequest {
+  string chat_id = 1;
+  string requester_id = 2;
+}
+
+message GetRevealStatusRequest {
+  string chat_id = 1;
+  string other_user_id = 2;
+}
+
+message IdentityRevealResponse {
+  string chat_id = 1;
+  string status = 2; // pending, accepted, declined
+  string requester_id = 3;
+  string target_id = 4;
+  
+  // Revealed information (only populated if accepted)
+  string revealed_first_name = 5;
+  string revealed_last_name = 6;
+  string revealed_email = 7;
+  string revealed_phone = 8;
+  
+  google.protobuf.Timestamp requested_at = 9;
+  google.protobuf.Timestamp responded_at = 10;
+}
+
+message PendingRevealRequestsResponse {
+  repeated IdentityRevealResponse requests = 1;
+}

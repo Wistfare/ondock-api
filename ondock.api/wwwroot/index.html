@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OnDock - Smart Boat Monitoring & Security</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Oxygen, Ubuntu, Cantarell, sans-serif;
+        background: #ffffff;
+        min-height: 100vh;
+        padding: 20px;
+        color: #000000;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      .header {
+        text-align: center;
+        color: #000000;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #000000;
+      }
+
+      .header h1 {
+        font-size: 2.5em;
+        margin-bottom: 10px;
+      }
+
+      .header p {
+        font-size: 1.2em;
+        margin-top: 10px;
+      }
+
+      .cta-button {
+        display: inline-block;
+        padding: 12px 30px;
+        background: #000000;
+        color: #ffffff;
+        text-decoration: none;
+        font-weight: 600;
+        margin-top: 20px;
+        transition: background 0.3s;
+      }
+
+      .cta-button:hover {
+        background: #333333;
+      }
+
+      .section {
+        background: #ffffff;
+        border: 2px solid #000000;
+        padding: 30px;
+        margin-bottom: 20px;
+      }
+
+      h2 {
+        color: #000000;
+        font-size: 1.8em;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #000000;
+        padding-bottom: 10px;
+      }
+
+      h3 {
+        color: #000000;
+        font-size: 1.3em;
+        margin-top: 20px;
+        margin-bottom: 10px;
+      }
+
+      p {
+        line-height: 1.6;
+        margin-bottom: 15px;
+      }
+
+      .features {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin: 20px 0;
+      }
+
+      .feature {
+        padding: 20px 0;
+      }
+
+      .feature h3 {
+        margin-top: 0;
+      }
+
+      ul {
+        line-height: 1.8;
+        margin-left: 20px;
+        margin-top: 15px;
+      }
+
+      ul li {
+        margin: 10px 0;
+      }
+
+      .steps {
+        margin: 20px 0;
+      }
+
+      .step {
+        margin: 20px 0;
+        padding-left: 30px;
+        position: relative;
+      }
+
+      .step-number {
+        position: absolute;
+        left: 0;
+        font-weight: bold;
+      }
+
+      .step h3 {
+        margin-top: 0;
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 2px solid #000000;
+      }
+
+      .footer a {
+        color: #000000;
+        text-decoration: none;
+        margin: 0 15px;
+      }
+
+      .footer a:hover {
+        text-decoration: underline;
+      }
+
+      @media (max-width: 768px) {
+        .header h1 {
+          font-size: 2em;
+        }
+
+        .section {
+          padding: 20px;
+        }
+
+        .features {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>OnDock</h1>
+        <p>The Essential Platform for Professional Drivers</p>
+        <a href="/auth-test" class="cta-button">Get Started</a>
+      </div>
+
+      <div class="section">
+        <h2>About OnDock</h2>
+        <p>
+          OnDock is a specialized trucking platform designed to provide
+          essential tools and services for professional drivers. The system
+          supports real-time communication, location-based services, dock
+          monitoring, road intelligence, and driver utility features all in one
+          comprehensive platform.
+        </p>
+      </div>
+
+      <div class="section">
+        <h2>Key Features</h2>
+        <div class="features">
+          <div class="feature">
+            <h3>Dock Light Monitoring</h3>
+            <p>
+              Real-time monitoring and status tracking of loading dock lights
+              for efficient freight operations with instant alerts.
+            </p>
+          </div>
+
+          <div class="feature">
+            <h3>Anonymous Chat System</h3>
+            <p>
+              Location-based anonymous communication with nearby drivers.
+              Connect, share information, and maintain privacy.
+            </p>
+          </div>
+
+          <div class="feature">
+            <h3>Road Intelligence</h3>
+            <p>
+              Community-driven road condition sharing. Get real-time traffic
+              updates and road conditions from fellow drivers.
+            </p>
+          </div>
+
+          <div class="feature">
+            <h3>Location Tools</h3>
+            <p>
+              Essential navigation tools including compass, GPS coordinates,
+              altitude tracking, and distance calculations.
+            </p>
+          </div>
+
+          <div class="feature">
+            <h3>Driver Matching</h3>
+            <p>
+              Interest-based matching system to connect with other drivers.
+              Optional identity reveal via QR code.
+            </p>
+          </div>
+
+          <div class="feature">
+            <h3>End-to-End Encryption</h3>
+            <p>
+              All messages and communications are secured with industry-standard
+              encryption protocols.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>How It Works</h2>
+        <div class="steps">
+          <div class="step">
+            <span class="step-number">1.</span>
+            <h3>Create Your Account</h3>
+            <p>
+              Sign up with your email, Google, or Apple account. Select your
+              driver profile category.
+            </p>
+          </div>
+
+          <div class="step">
+            <span class="step-number">2.</span>
+            <h3>Set Your Preferences</h3>
+            <p>
+              Configure your location radius, notification settings, and
+              community preferences.
+            </p>
+          </div>
+
+          <div class="step">
+            <span class="step-number">3.</span>
+            <h3>Connect with Drivers</h3>
+            <p>
+              Join location-based chat rooms and share road intelligence with
+              nearby drivers.
+            </p>
+          </div>
+
+          <div class="step">
+            <span class="step-number">4.</span>
+            <h3>Monitor Dock Lights</h3>
+            <p>
+              Track loading dock status in real-time and receive alerts for
+              status changes.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Why Choose OnDock?</h2>
+        <ul>
+          <li>
+            <strong>Built for Drivers:</strong> Designed specifically for truck
+            drivers, bus drivers, and RV enthusiasts.
+          </li>
+          <li>
+            <strong>Privacy First:</strong> Anonymous chat and zero-knowledge
+            architecture protect your identity.
+          </li>
+          <li>
+            <strong>Real-Time Updates:</strong> Get instant notifications for
+            dock status changes and road conditions.
+          </li>
+          <li>
+            <strong>Community-Driven:</strong> Benefit from shared intelligence
+            from thousands of professional drivers.
+          </li>
+          <li>
+            <strong>Enterprise-Grade:</strong> Scalable infrastructure
+            supporting 10,000+ concurrent users.
+          </li>
+          <li>
+            <strong>Cross-Platform:</strong> Available on iOS, Android, and Web
+            for seamless access anywhere.
+          </li>
+        </ul>
+      </div>
+
+      <div class="section">
+        <h2>Support & Contact</h2>
+        <p>Need help getting started? We're here to assist you.</p>
+        <ul>
+          <li>
+            Email: <a href="mailto:support@ondock.app">support@ondock.app</a>
+          </li>
+          <li>Documentation: Available in app</li>
+          <li>Live Chat: 9 AM - 6 PM EST</li>
+        </ul>
+      </div>
+
+      <div class="footer">
+        <p>&copy; 2024 OnDock. All rights reserved.</p>
+        <div style="margin-top: 15px">
+          <a href="/privacy-policy">Privacy Policy</a>
+          <a href="/terms-of-service">Terms of Service</a>
+          <a href="mailto:support@ondock.app">Contact</a>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

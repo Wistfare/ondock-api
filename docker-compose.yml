@@ -1,0 +1,56 @@
+﻿services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      - POSTGRES_DB=dev-ondock-db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5437:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  ondock.api:
+    image: ondock.api
+    build:
+      context: .
+      dockerfile: ondock.api/Dockerfile
+    depends_on:
+      - db
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=db;Database=dev-ondock-db;Username=postgres;Password=postgres;Port=5432
+      - ApplyMigrations=true
+      - MagicPush__BaseUrl=http://magicpush-backend:6969
+      - MagicPush__AppHash=
+      - MagicPush__ApiKey=
+    ports:
+      - "8080:8080"
+
+  magicpush-db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+
+  magicpush-redis:
+    image: redis:6
+
+  magicpush-backend:
+    image: svenvdz/magicpush:latest
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@magicpush-db:5432/postgres
+      - REDIS_URL=redis://magicpush-redis:6379/0
+      - FLASK_APP=magicpush/__init__.py
+      - CELERY_BROKER_URL=redis://magicpush-redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://magicpush-redis:6379/1
+      - CELERY_ONCE_URL=redis://magicpush-redis:6379/1
+    depends_on:
+      - magicpush-db
+      - magicpush-redis
+    ports:
+      - "6969:6969"  # MagicPush backend API
+
+volumes:
+  db_data:

@@ -1,0 +1,110 @@
+syntax = "proto3";
+
+package ondock.v1;
+
+option csharp_namespace = "Ondock.Api.Grpc.V1";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+import "Protos/ondock/v1/common.proto";
+
+// Announcements Service
+service AnnouncementsService {
+  // Get announcements near location
+  rpc GetAnnouncements(GetAnnouncementsRequest) returns (GetAnnouncementsResponse);
+  
+  // Get a single announcement
+  rpc GetAnnouncement(GetAnnouncementRequest) returns (Announcement);
+  
+  // Create a new announcement
+  rpc CreateAnnouncement(CreateAnnouncementRequest) returns (CreateAnnouncementResponse);
+  
+  // Delete an announcement
+  rpc DeleteAnnouncement(DeleteAnnouncementRequest) returns (Empty);
+  
+  // Track view on announcement
+  rpc TrackView(TrackViewRequest) returns (Empty);
+  
+  // Stream new announcements in real-time
+  rpc StreamAnnouncements(StreamAnnouncementsRequest) returns (stream AnnouncementEvent);
+}
+
+message GetAnnouncementsRequest {
+  double latitude = 1;
+  double longitude = 2;
+  int32 take = 3;
+}
+
+message GetAnnouncementsResponse {
+  repeated Announcement announcements = 1;
+}
+
+message GetAnnouncementRequest {
+  string announcement_id = 1;
+}
+
+message Announcement {
+  string announcement_id = 1;
+  string title = 2;
+  string body = 3;
+  int32 urgency_level = 4; // 0=Info, 1=Low, 2=Medium, 3=High, 4=Critical
+  string author_anonymous_id = 5;
+  string author_display_name = 6;
+  string author_color = 7;
+  bool is_mine = 8;
+  google.protobuf.Timestamp created_at = 9;
+  double distance_miles = 10;
+  int32 view_count = 11;
+  int32 reply_count = 12;
+}
+
+message CreateAnnouncementRequest {
+  string title = 1;
+  string body = 2;
+  int32 urgency_level = 3;
+  double latitude = 4;
+  double longitude = 5;
+}
+
+message CreateAnnouncementResponse {
+  string announcement_id = 1;
+  string message = 2;
+  Announcement announcement = 3;
+}
+
+message DeleteAnnouncementRequest {
+  string announcement_id = 1;
+}
+
+message TrackViewRequest {
+  string announcement_id = 1;
+}
+
+message StreamAnnouncementsRequest {
+  double latitude = 1;
+  double longitude = 2;
+  double radius_miles = 3; // Optional radius filter
+}
+
+message AnnouncementEvent {
+  string event_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  
+  oneof event {
+    AnnouncementCreatedEvent created = 3;
+    AnnouncementDeletedEvent deleted = 4;
+    AnnouncementUpdatedEvent updated = 5;
+  }
+}
+
+message AnnouncementCreatedEvent {
+  Announcement announcement = 1;
+}
+
+message AnnouncementDeletedEvent {
+  string announcement_id = 1;
+}
+
+message AnnouncementUpdatedEvent {
+  Announcement announcement = 1;
+}

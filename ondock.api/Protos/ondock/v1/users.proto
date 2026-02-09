@@ -1,0 +1,131 @@
+syntax = "proto3";
+
+package ondock.v1;
+
+option csharp_namespace = "Ondock.Api.Grpc.V1";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+import "Protos/ondock/v1/common.proto";
+
+// Users Service - for profile, settings, and discovery
+service UsersService {
+  // Get current user's chat profile
+  rpc GetProfile(Empty) returns (UserProfileResponse);
+  
+  // Update current user's chat profile
+  rpc UpdateProfile(UpdateProfileRequest) returns (UserProfileResponse);
+  
+  // Get current user's settings
+  rpc GetSettings(Empty) returns (UserSettingsResponse);
+  
+  // Update current user's settings
+  rpc UpdateSettings(UpdateSettingsRequest) returns (UserSettingsResponse);
+  
+  // Get nearby users for discovery (one-time fetch)
+  rpc GetNearbyUsers(GetNearbyUsersRequest) returns (NearbyUsersResponse);
+  
+  // Stream nearby users in real-time (replaces polling)
+  // Server pushes updates when users move, join, or leave the area
+  rpc StreamNearbyUsers(StreamNearbyUsersRequest) returns (stream NearbyUserEvent);
+  
+  // Update user location (heartbeat)
+  rpc UpdateLocation(UpdateLocationRequest) returns (Empty);
+}
+
+message UserProfileResponse {
+  bool has_profile = 1;
+  string category_id = 2;
+  string category_name = 3;
+  string sub_category_id = 4;
+  string sub_category_name = 5;
+  string vehicle_type_id = 6;
+  string vehicle_type_name = 7;
+  string vehicle_brand_id = 8;
+  string vehicle_brand_name = 9;
+}
+
+message UpdateProfileRequest {
+  string category_id = 1;
+  string sub_category_id = 2;
+  string vehicle_type_id = 3;
+  string vehicle_brand_id = 4;
+  string custom_vehicle_type = 5;
+  string custom_vehicle_brand = 6;
+}
+
+message UserSettingsResponse {
+  bool dnd_enabled = 1;
+  google.protobuf.Timestamp dnd_until = 2;
+  bool notifications_enabled = 3;
+  bool sound_enabled = 4;
+  bool vibration_enabled = 5;
+  double discovery_radius_miles = 6;
+  bool show_on_map = 7;
+  bool allow_chat_requests = 8;
+}
+
+message UpdateSettingsRequest {
+  google.protobuf.BoolValue dnd_enabled = 1;
+  google.protobuf.Timestamp dnd_until = 2;
+  google.protobuf.BoolValue notifications_enabled = 3;
+  google.protobuf.BoolValue sound_enabled = 4;
+  google.protobuf.BoolValue vibration_enabled = 5;
+  google.protobuf.DoubleValue discovery_radius_miles = 6;
+  google.protobuf.BoolValue show_on_map = 7;
+  google.protobuf.BoolValue allow_chat_requests = 8;
+}
+
+message GetNearbyUsersRequest {
+  double latitude = 1;
+  double longitude = 2;
+  double speed_mph = 3;
+  google.protobuf.DoubleValue radius_miles = 4;
+}
+
+message NearbyUsersResponse {
+  repeated DiscoveryUser users = 1;
+}
+
+message DiscoveryUser {
+  string anonymous_user_id = 1;
+  string display_name = 2;
+  string display_color = 3;
+  double latitude = 4;
+  double longitude = 5;
+  double distance_miles = 6;
+  string category_name = 7;
+  string vehicle_type_name = 8;
+  string vehicle_brand_name = 9;
+  bool is_permanent_contact = 10;
+  google.protobuf.Timestamp last_seen = 11;
+}
+
+message UpdateLocationRequest {
+  double latitude = 1;
+  double longitude = 2;
+  double speed_mph = 3;
+}
+
+// Request to stream nearby users
+message StreamNearbyUsersRequest {
+  double latitude = 1;
+  double longitude = 2;
+  google.protobuf.DoubleValue radius_miles = 3;
+}
+
+// Event types for nearby user stream
+enum NearbyUserEventType {
+  NEARBY_USER_EVENT_TYPE_UNSPECIFIED = 0;
+  NEARBY_USER_EVENT_TYPE_INITIAL = 1;      // Initial batch of nearby users
+  NEARBY_USER_EVENT_TYPE_USER_JOINED = 2;   // New user entered the area
+  NEARBY_USER_EVENT_TYPE_USER_LEFT = 3;     // User left the area
+  NEARBY_USER_EVENT_TYPE_USER_MOVED = 4;    // User location updated
+}
+
+// Streamed event for nearby user updates
+message NearbyUserEvent {
+  NearbyUserEventType event_type = 1;
+  repeated DiscoveryUser users = 2;  // For INITIAL: all users; for others: affected user(s)
+  google.protobuf.Timestamp timestamp = 3;
+}
